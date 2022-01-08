@@ -150,25 +150,33 @@ int main(int argc, char** argv){
     int idx = 0;
     FIBITMAP *bitmap1 = NULL;
     FIBITMAP *bitmap2 = NULL;
-    char loc[50] = {};
+    char loc[50] = {}; 
+    
     for (idx = 0; idx < page; idx++){
         sprintf(loc, "\033[%d;%dH", 0, 0);
         printf("%s", loc);
 
         bitmap1 = FreeImage_LockPage(bitmap, idx);
+        bitmap2 = FreeImage_ConvertTo24Bits(bitmap1);
         int width = FreeImage_GetWidth(bitmap1);
         int height = FreeImage_GetHeight(bitmap1);
         int bpp = FreeImage_GetBPP(bitmap1);
         int pitch = FreeImage_GetPitch(bitmap1);
+
+
+        FreeImage_Unload(bitmap1);
         //printf("width:%d height:%d bpp:%d pitch:%d\r\n", width, height, bpp, pitch);
-    int y = 0;
-    int x = 0;
-    int z = 0;
+        int y = 0;
+        int x = 0;
+        int z = 0; 
+        char *line = (char *)malloc(width*20);
+        char *p = line;
+
     for (y = height - 1; y >= 0; y = y - Delta){
         for (x = 0, z = 0; x < width; x = x + Delta, z++){
             RGBQUAD color;
+            char *cStr = NULL;
             int ret = 0;
-            bitmap2 = FreeImage_ConvertTo24Bits(bitmap1);
             ret = FreeImage_GetPixelColor(bitmap2, x, y, &color);
             if (ret){
                 //printf("FreeImage_GetPixelColor ok\r\n");
@@ -177,17 +185,22 @@ int main(int argc, char** argv){
             }
 
             //printf("%d_%d r:%d g:%d b:%d\r\n", x, y, color.rgbRed, color.rgbGreen, color.rgbBlue);
-            if (y == height - 1 -Delta){
-                 printf("%s%c%s",findSimilarColor(color.rgbRed, color.rgbGreen,color.rgbBlue ), getCh(color.rgbRed, color.rgbGreen, color.rgbBlue, i), end);
-            }else{   
-                printf("%s%c%s",findSimilarColor(color.rgbRed, color.rgbGreen,color.rgbBlue ), getCh(color.rgbRed, color.rgbGreen, color.rgbBlue, i), end);
-            }
+            cStr = findSimilarColor(color.rgbRed, color.rgbGreen,color.rgbBlue);
+            sprintf(line, "%s%c%s", cStr, getCh(color.rgbRed, color.rgbGreen, color.rgbBlue, i), end);
+            //printf("%s\n", line);
+            line += strlen(cStr) + 1 + strlen(end);
+           //printf("%s%c%s",findSimilarColor(color.rgbRed, color.rgbGreen,color.rgbBlue ), getCh(color.rgbRed, color.rgbGreen, color.rgbBlue, i), end);
         }
         //usleep(1000*50);
-        printf("\n");
+        printf("%s\n", p);
+        memset(p, 0, width*20);
+        line = p;
     }
 
-        FreeImage_UnlockPage(bitmap, bitmap1, FALSE);
+
+    FreeImage_Unload(bitmap2);
+    free(p);
     }
+
     return 0;
 }
